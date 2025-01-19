@@ -1,0 +1,10 @@
+fastapi[all]==0.115.6
+pydantic==2.10.0
+pydantic-settings==2.1.0
+langchain==0.1.0
+langchain-community==0.0.20
+python-dotenv==1.0.0
+uvicorn==0.25.0
+openai==1.0.0  # If using OpenAI
+aiohttp==3.11.11
+python-multipart==0.0.7
