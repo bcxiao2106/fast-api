@@ -1,3 +1,4 @@
+from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from chains.base import BaseChain
 
@@ -9,4 +10,4 @@ class CompletionChain(BaseChain):
             input_variables=["query"],
             template="Please respond to the following query: {query}"
         )
-        return self.llm | prompt
+        return LLMChain(llm=self.llm, prompt=prompt)

@@ -1,5 +1,4 @@
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
 from langchain.llms.base import BaseLLM
 
 class BaseChain:
@@ -13,10 +12,10 @@ class BaseChain:
         """Create the chain."""
         raise NotImplementedError("Subclass must implement abstract method")
     
-    async def arun(self, **kwargs):
+    async def ainvoke(self, inputs: dict):
         """Run the chain asynchronously."""
-        return await self.chain.arun(**kwargs)
+        return await self.chain.ainvoke(inputs)
     
-    def run(self, **kwargs):
+    def invoke(self, inputs: dict):
         """Run the chain."""
-        return self.chain.run(**kwargs)
+        return self.chain.invoke(inputs)

@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     # LLM Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama2"  # default model
+    OLLAMA_MODEL: str = "llama3.2:latest"  # default model
     # Add your API keys and other settings here
     # OPENAI_API_KEY: str
     # PINECONE_API_KEY: str
