@@ -3,6 +3,10 @@ from config.settings import settings
 import aiohttp
 import json
 from typing import Optional
+from langchain.schema.language_model import BaseLanguageModel
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def validate_ollama_model(model: str) -> bool:
     """
@@ -15,9 +19,12 @@ async def validate_ollama_model(model: str) -> bool:
         bool: True if model exists, False otherwise
     """
     try:
-        async with aiohttp.ClientSession() as session:
+        timeout = aiohttp.ClientTimeout(total=30)  # 30 second timeout
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            logger.info(f"Checking for model: {model}")
             async with session.get(f"{settings.OLLAMA_BASE_URL}/api/tags") as response:
                 if response.status != 200:
+                    logger.error(f"Failed to get models list. Status: {response.status}")
                     return False
                 data = await response.json()
                 # Strip :latest suffix for comparison if present
@@ -26,12 +33,14 @@ async def validate_ollama_model(model: str) -> bool:
                     m["name"][:-7] if m["name"].endswith(':latest') else m["name"]
                     for m in data.get("models", [])
                 ]
+                logger.info(f"Available models: {available_models}")
+                logger.info(f"Looking for model: {model_name}")
                 return model_name in available_models
     except Exception as e:
-        print(f"Error validating model: {str(e)}")
+        logger.error(f"Error validating model: {str(e)}", exc_info=True)
         return False
 
-def get_ollama_llm(model_name: Optional[str] = None) -> Ollama:
+def get_llm(model_name: Optional[str] = None) -> BaseLanguageModel:
     """
     Initialize and return an Ollama LLM instance.
     
@@ -50,5 +59,5 @@ def get_ollama_llm(model_name: Optional[str] = None) -> Ollama:
         base_url=settings.OLLAMA_BASE_URL,
         model=model,
         temperature=0.7,  # Add some temperature for more creative responses
-        timeout=60,  # Increase timeout to handle longer responses
+        timeout=120.0,  # Increase timeout to 2 minutes
     )

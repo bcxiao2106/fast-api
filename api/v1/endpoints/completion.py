@@ -1,9 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from utils.llm import get_ollama_llm, validate_ollama_model
+from utils.llm import get_llm, validate_ollama_model
 from chains.completion import CompletionChain
 import logging
 from langchain_community.llms.ollama import OllamaEndpointNotFoundError
+from config.settings import settings
+import asyncio
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ async def get_completion(request: CompletionRequest):
     Get a completion from Ollama
     """
     try:
-        model = request.model or "llama3.2:latest"
+        model = request.model or settings.OLLAMA_MODEL
         if not model.endswith(':latest'):
             model = f"{model}:latest"
             
@@ -32,10 +34,17 @@ async def get_completion(request: CompletionRequest):
                 detail=f"Model '{model}' not found. Please make sure the model is installed in Ollama."
             )
             
-        llm = get_ollama_llm(model)
+        llm = get_llm(model)
         chain = CompletionChain(llm)
-        result = await chain.ainvoke({"query": request.query})
-        return CompletionResponse(response=result["text"])
+        try:
+            result = await chain.ainvoke({"query": request.query})
+            return CompletionResponse(response=result["text"])
+        except asyncio.TimeoutError:
+            logger.error("Request timed out while waiting for Ollama response", exc_info=True)
+            raise HTTPException(
+                status_code=504,
+                detail="Request timed out while waiting for response. The model may be busy or taking too long to process."
+            )
     except OllamaEndpointNotFoundError as e:
         logger.error(f"Ollama endpoint error: {str(e)}", exc_info=True)
         raise HTTPException(
